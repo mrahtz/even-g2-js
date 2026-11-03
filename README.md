@@ -7,7 +7,8 @@ Drive [Even Realities G2](https://www.evenrealities.com/) smart glasses from a w
 - **`test.mjs`**: protocol checks against golden vectors from real captures.
 
 ```bash
-python3 -m http.server 8000     # then open http://localhost:8000 in Chrome
+# try it: https://mrahtz.github.io/even-g2-js/  (Chrome or Edge)
+python3 -m http.server 8000     # or run locally: http://localhost:8000
 node test.mjs                   # protocol checks
 ```
 
@@ -57,3 +58,7 @@ Frames are `aa 21 <seq> <len> <total> <index> <sid> <flag> <protobuf…> <crc16 
 4. From then on: text updates, page rebuilds, and a heartbeat every 5 s.
 
 This is unofficial, and builds on community reverse-engineering, mainly [Commute773/g2-kit](https://github.com/Commute773/g2-kit) (protobuf schemas and firmware gotchas) and [i-soxi/even-g2-protocol](https://github.com/i-soxi/even-g2-protocol) (the handshake). It's not affiliated with Even Realities.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
