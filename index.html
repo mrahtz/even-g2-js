@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>G2 Web</title>
+<style>
+  :root {
+    --bg: #f6f7f6; --panel: #ffffff; --text: #18201b; --muted: #5f6b64; --line: #dde3df;
+    --accent: #13824a; --accent-text: #ffffff; --lens-bg: #050806; --lens: #45ff7a; --warn: #b4580e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1311; --panel: #171c19; --text: #e6ece8; --muted: #95a39b; --line: #2a322d;
+            --accent: #3ccf7c; --accent-text: #06120b; --warn: #f0a35a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 10px; }
+  .status { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .dot.on { background: var(--accent); }
+  .spacer { flex: 1; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .stack > * + * { margin-top: 16px; }
+  .lens { aspect-ratio: 2 / 1; background: var(--lens-bg); border-radius: 10px; color: var(--lens);
+          font: 500 clamp(9px, 1.55vw, 14px)/1.35 ui-rounded, -apple-system, system-ui, sans-serif;
+          padding: 2.2% 2.6%; white-space: pre; overflow: hidden; }
+  textarea, input, select { width: 100%; font: inherit; color: var(--text); background: var(--bg);
+          border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  textarea { min-height: 96px; resize: vertical; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .row label { margin: 0; display: flex; gap: 6px; align-items: center; color: var(--text); font-size: 14px; }
+  .row input[type=checkbox] { width: auto; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+           border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; font-weight: 600; }
+  button:disabled { opacity: 0.45; cursor: default; }
+  #log { font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted);
+         max-height: 220px; overflow: auto; white-space: pre-wrap; }
+  #log .g { color: var(--accent); }
+  .note { font-size: 13px; color: var(--muted); }
+  .warn { color: var(--warn); }
+  .params { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .params .wide { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>G2 Web</h1>
+    <div class="status"><span class="dot" id="dot"></span><span id="state">Not connected</span></div>
+    <div class="spacer"></div>
+    <button class="primary" id="connect">Connect glasses</button>
+    <button id="forget" hidden>Choose other glasses</button>
+  </header>
+
+  <p class="note" id="support"></p>
+
+  <div class="grid">
+    <div class="stack">
+      <section>
+        <h2>Lens</h2>
+        <div class="lens" id="lens"> </div>
+        <p class="note">Approximate preview. The glasses use their own proportional font.</p>
+      </section>
+      <section>
+        <h2>Text</h2>
+        <textarea id="text">Hello from a web page!
+This came straight from the browser over Web Bluetooth.</textarea>
+        <div class="row">
+          <label><input type="checkbox" id="live"> Live</label>
+          <div class="spacer"></div>
+          <button id="clear" disabled>Clear lens</button>
+          <button class="primary" id="send" disabled>Send</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section>
+        <h2>Animation</h2>
+        <select id="effect">
+          <option value="countdown">Countdown</option>
+          <option value="spinner">Spinner</option>
+          <option value="progress">Progress bar</option>
+          <option value="stopwatch">Stopwatch</option>
+          <option value="clock">Clock</option>
+          <option value="ticker">Ticker</option>
+          <option value="typewriter">Typewriter</option>
+          <option value="breathe">Breathing</option>
+          <option value="equalizer">Equalizer</option>
+        </select>
+        <div class="params" id="params"></div>
+        <div class="row">
+          <span class="note" id="animState"></span>
+          <div class="spacer"></div>
+          <button id="stop" disabled>Stop</button>
+          <button class="primary" id="play" disabled>Play on lens</button>
+        </div>
+      </section>
+      <section>
+        <h2>Gestures &amp; log</h2>
+        <div id="log"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { G2, effects } from "./g2.js";
+
+const $ = (id) => document.getElementById(id);
+let g2 = null;
+let preview = null; // { effect, start, state } when previewing locally
+
+const support = $("support");
+if (!G2.supported) {
+  support.innerHTML = '<span class="warn">This browser has no Web Bluetooth.</span> Use Chrome or Edge on a Mac, PC or Android phone (not Safari or iOS).';
+  $("connect").disabled = true;
+} else if (!window.isSecureContext) {
+  support.innerHTML = '<span class="warn">Web Bluetooth needs https or localhost.</span>';
+} else {
+  support.textContent = "The glasses talk to one host at a time: quit G2 Link and turn off your phone's Bluetooth first. Each temple is a separate Bluetooth device, so the first time the picker lists two: choose the one with _R_ in its name. After that it lists only that one.";
+}
+
+function log(text, cls = "") {
+  const line = document.createElement("div");
+  line.className = cls;
+  line.textContent = `${new Date().toLocaleTimeString()}  ${text}`;
+  $("log").append(line);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+function setConnected(on) {
+  $("dot").classList.toggle("on", on);
+  $("connect").textContent = on ? "Disconnect" : "Connect glasses";
+  for (const id of ["send", "clear", "play"]) $(id).disabled = !on;
+  if (!on) $("stop").disabled = true;
+}
+
+// Remember this pair's right temple so the picker shows just that one next time.
+const store = {
+  get() { try { return localStorage.getItem("g2.prefix"); } catch { return null; } },
+  set(v) { try { v ? localStorage.setItem("g2.prefix", v) : localStorage.removeItem("g2.prefix"); } catch {} },
+};
+$("forget").hidden = !store.get();
+$("forget").onclick = () => { store.set(null); $("forget").hidden = true; log("forgot these glasses; the picker will list every temple"); };
+
+$("connect").onclick = async () => {
+  if (g2?.connected) { g2.disconnect(); return; }
+  try {
+    $("state").textContent = "Connecting…";
+    g2 = await G2.connect({ log: (s) => log(s), namePrefix: store.get() ?? undefined });
+    const prefix = G2.rightTemplePrefix(g2.name);
+    if (prefix && /_R_/i.test(g2.name)) { store.set(prefix); $("forget").hidden = false; }
+    g2.addEventListener("gesture", (e) => {
+      const d = e.detail;
+      if (d.type === "motion") return;
+      log(`${d.type}${d.source ? ` from ${d.source}` : ""}${d.item ? `: ${d.item}` : ""}`, "g");
+    });
+    g2.addEventListener("status", (e) => {
+      const s = e.detail;
+      $("state").textContent = `${g2.name} · battery ${s.battery}%${s.charging ? " (charging)" : ""} · fw ${s.firmware}`;
+    });
+    g2.addEventListener("disconnect", () => { setConnected(false); $("state").textContent = "Disconnected"; log("disconnected"); });
+    setConnected(true);
+    $("state").textContent = g2.name;
+    log(`connected to ${g2.name}`);
+  } catch (e) {
+    $("state").textContent = "Not connected";
+    if (e.name !== "NotFoundError") log(`connect failed: ${e.message}`);
+  }
+};
+
+// Text
+const showText = () => { stopPreview(); $("lens").textContent = $("text").value || " "; return g2?.text($("text").value); };
+$("send").onclick = showText;
+$("clear").onclick = () => { stopPreview(); $("lens").textContent = " "; g2?.clear(); };
+let debounce;
+$("text").oninput = () => {
+  if (!$("live").checked) return;
+  clearTimeout(debounce);
+  debounce = setTimeout(showText, 200);
+};
+
+// Animations
+const PARAMS = {
+  countdown: [["label", "Label", "Tea"], ["seconds", "Seconds", 180]],
+  spinner: [["label", "Label", "Loading"], ["style", "Style", "dots", ["dots", "bar", "line", "blocks", "arrows"]]],
+  progress: [["label", "Label", "Uploading"], ["seconds", "Seconds", 20]],
+  stopwatch: [["label", "Label", "Lap"]],
+  clock: [],
+  ticker: [["text", "Text", "Breaking: this ticker is driven straight from a web page. ", null, true], ["cps", "Characters / second", 8]],
+  typewriter: [["text", "Text", "Typing this out from the browser, one letter at a time.", null, true], ["cps", "Characters / second", 12]],
+  breathe: [["inhale", "In (s)", 4], ["hold", "Hold (s)", 2], ["exhale", "Out (s)", 6]],
+  equalizer: [["label", "Label", "Now playing"]],
+};
+
+function renderParams() {
+  const box = $("params");
+  box.innerHTML = "";
+  for (const [key, name, value, choices, wide] of PARAMS[$("effect").value]) {
+    const wrap = document.createElement("div");
+    if (wide) wrap.className = "wide";
+    const l = document.createElement("label");
+    l.textContent = name;
+    let input;
+    if (choices) {
+      input = document.createElement("select");
+      for (const c of choices) input.append(new Option(c, c));
+    } else {
+      input = document.createElement("input");
+      input.type = typeof value === "number" ? "number" : "text";
+    }
+    input.value = value;
+    input.dataset.key = key;
+    input.oninput = startPreview;
+    wrap.append(l, input);
+    box.append(wrap);
+  }
+  startPreview();
+}
+
+function currentEffect() {
+  const opts = {};
+  for (const el of $("params").querySelectorAll("[data-key]")) {
+    opts[el.dataset.key] = el.type === "number" ? Number(el.value) : el.value;
+  }
+  return effects[$("effect").value](opts);
+}
+
+function startPreview() {
+  preview = { effect: currentEffect(), start: performance.now(), state: { paused: false, value: 0 } };
+}
+function stopPreview() { preview = null; }
+
+(function frameLoop() {
+  if (preview) {
+    const t = (performance.now() - preview.start) / 1000;
+    const d = preview.effect.duration;
+    $("lens").textContent = preview.effect.frame(d != null ? Math.min(t, d) : t, preview.state);
+  }
+  requestAnimationFrame(frameLoop);
+})();
+
+$("effect").onchange = renderParams;
+$("play").onclick = () => {
+  startPreview();
+  preview.state = g2.play(preview.effect);
+  // Keep the preview in step with what's on the lens (pauses included).
+  preview.start = performance.now();
+  const sync = setInterval(() => {
+    if (!preview || !g2?.connected) return clearInterval(sync);
+    preview.start = performance.now() - preview.state.elapsed * 1000;
+    $("animState").textContent = preview.state.finished ? "Finished" : preview.state.paused ? "Paused (tap to resume)" : "Playing. Tap the glasses to pause";
+    $("stop").disabled = preview.state.finished;
+  }, 100);
+};
+$("stop").onclick = () => { g2?.stop(); $("animState").textContent = "Stopped"; $("stop").disabled = true; stopPreview(); };
+
+renderParams();
+</script>
+</body>
+</html>
