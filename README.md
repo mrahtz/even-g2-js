@@ -7,7 +7,7 @@ Drive [Even Realities G2](https://www.evenrealities.com/) smart glasses from a w
 - **`test.mjs`**: protocol checks against golden vectors from real captures.
 
 ```bash
-# try it: https://mrahtz.github.io/even-g2-js/  (Chrome or Edge)
+# try it: https://amid.fish/even-g2-js/  (Chrome or Edge)
 python3 -m http.server 8000     # or run locally: http://localhost:8000
 node test.mjs                   # protocol checks
 ```

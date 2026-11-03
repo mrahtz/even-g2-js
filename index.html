@@ -113,6 +113,12 @@ This came straight from the browser over Web Bluetooth.</textarea>
   </div>
 </main>
 
+<script>
+  // Web Bluetooth needs a secure context; hop from http:// to https:// (except locally).
+  if (location.protocol === "http:" && !["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) {
+    location.replace(location.href.replace(/^http:/, "https:"));
+  }
+</script>
 <script type="module">
 import { G2, effects } from "./g2.js";
 
